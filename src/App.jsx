@@ -8,9 +8,12 @@ export default function App() {
 
   const [dice, setDice] = React.useState(allNewDice())
   const [tenzies, setTenzies] = React.useState(false)
-  const [rollCount, setRollCount] = React.useState(0)
-  const [timeTaken, setTimeTaken] = React.useState(0)
-  const [name, setName] = React.useState("")
+  const [stats, setStats] = React.useState({
+    rollCount: 0,
+    timeTaken: 0,
+    date: Date.now(),
+    name: "",
+  })
 
   React.useEffect(() => {
     const allHeld = dice.every(die => die.isHeld)
@@ -25,8 +28,11 @@ export default function App() {
     let interval;
     if (!tenzies) {
       interval = setInterval(() => {
-        setTimeTaken((prevTime) => prevTime + 10);
-      }, 10);
+        setStats(prev => ({
+          ...prev,
+          timeTaken: prev.timeTaken + 1000
+        }))
+      }, 1000);
     } else if (tenzies) {
       clearInterval(interval);
     }
@@ -52,15 +58,22 @@ export default function App() {
 
   function rollDice() {
     if (!tenzies) {
-      setRollCount(prev => prev + 1)
+      setStats(prev => ({
+        ...prev,
+        rollCount: prev.rollCount + 1
+      }))
       setDice(oldDice => oldDice.map(die => {
         return die.isHeld ?
           die :
           generateNewDie()
       }))
     } else {
-      setRollCount(0)
-      setTimeTaken(0)
+      setStats(prev => ({
+        ...prev,
+        rollCount: 0,
+        timeTaken: 0,
+        date: Date.now(),
+      }))
       setTenzies(false)
       setDice(allNewDice())
     }
@@ -84,7 +97,10 @@ export default function App() {
   ))
 
   function handleName(event) {
-    setName(event.target.value)
+    setStats(prev => ({
+      ...prev,
+      name: event.target.value
+    }))
   }
 
   function submitScore() {
@@ -109,10 +125,10 @@ export default function App() {
         </button>
         <Stats
           tenzies={tenzies}
-          rollCount={rollCount}
-          timeTaken={timeTaken}
+          rollCount={stats.rollCount}
+          timeTaken={stats.timeTaken}
           submitScore={submitScore}
-          name={name}
+          name={stats.name}
           handleName={handleName}
         />
       </section>

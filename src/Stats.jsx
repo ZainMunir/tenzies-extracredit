@@ -8,7 +8,7 @@ export default function Stats(props) {
                 <p>Time: {Math.floor(props.timeTaken / 1000)}s</p>
                 {props.tenzies && <>
                     <input type="text" maxLength="20" value={props.name} onChange={props.handleName} placeholder="Name" />
-                    <button onClick={props.submitScore}>Submit Score</button>
+                    <button onClick={props.submitScore}>Sumbit Score</button>
                 </>}
             </div>
         </>
