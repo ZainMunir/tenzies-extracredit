@@ -3,6 +3,14 @@ import Die from "./Die"
 import { nanoid } from "nanoid"
 import Confetti from "react-confetti"
 import Stats from "./Stats"
+import { tenziesLeaderboard, db } from "../api/firebase"
+import {
+  onSnapshot,
+  addDoc,
+  doc,
+  deleteDoc,
+  setDoc
+} from "firebase/firestore"
 
 export default function App() {
 
@@ -14,6 +22,8 @@ export default function App() {
     date: Date.now(),
     name: "",
   })
+  const [leaderboard, setLeaderboard] = React.useState([])
+  const [submitted, setSubmitted] = React.useState(false)
 
   React.useEffect(() => {
     const allHeld = dice.every(die => die.isHeld)
@@ -39,6 +49,41 @@ export default function App() {
     return () => clearInterval(interval);
   }, [tenzies]);
 
+  React.useEffect(() => {
+    const unsubscribe = onSnapshot(tenziesLeaderboard, function (snapshot) {
+      const boardArr = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      }))
+      setLeaderboard(boardArr)
+    })
+    return unsubscribe
+  }, [])
+
+  const leaderboardElements = leaderboard.sort((a, b) => a.rollCount - b.rollCount).map(x => {
+    return (
+      <div key={x.id} className="leaderboard--entry">
+        <p>{x.name}</p>
+        <p>{x.rollCount}</p>
+        <p>{x.timeTaken / 1000}s</p>
+        <p> {formatDate(x.date)} </p>
+      </div>
+    )
+  })
+
+  function formatDate(date) {
+    var d = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day = '' + d.getDate(),
+      year = d.getFullYear();
+
+    if (month.length < 2)
+      month = '0' + month;
+    if (day.length < 2)
+      day = '0' + day;
+
+    return [year, month, day].join('-');
+  }
 
   function generateNewDie() {
     return {
@@ -74,6 +119,7 @@ export default function App() {
         timeTaken: 0,
         date: Date.now(),
       }))
+      setSubmitted(false)
       setTenzies(false)
       setDice(allNewDice())
     }
@@ -103,14 +149,19 @@ export default function App() {
     }))
   }
 
-  function submitScore() {
-    // TODO
+  async function submitScore() {
+    if (stats.name.trim() === "") {
+      alert("enter a name")
+      return;
+    }
+    setSubmitted(true)
+    await addDoc(tenziesLeaderboard, stats)
   }
 
   return (
     <>
-      <section>
-        {tenzies && <Confetti />}
+      {tenzies && <Confetti width={window.innerWidth - 20} height={window.innerHeight - 20} />}
+      <section className="tenzies">
         <h1 className="title">Tenzies</h1>
         <p className="instructions">Roll until all dice are the same.
           Click each die to freeze it at its current value between rolls.</p>
@@ -129,10 +180,22 @@ export default function App() {
           timeTaken={stats.timeTaken}
           submitScore={submitScore}
           name={stats.name}
+          submitted = {submitted}
           handleName={handleName}
         />
       </section>
-      {/* <Leaderboard /> */}
+      <section className="leaderboard">
+        <h1 className="title">Leaderboard</h1>
+        <div className="leaderboard--table">
+          <p>Name</p>
+          <p>Rolls</p>
+          <p>Time</p>
+          <p>Date</p>
+        </div>
+        <div className="leaderboard--entries">
+        {leaderboardElements}
+        </div>
+      </section>
     </>
   )
 }
