@@ -2,11 +2,15 @@ import React from "react"
 import Die from "./Die"
 import { nanoid } from "nanoid"
 import Confetti from "react-confetti"
+import Stats from "./Stats"
 
 export default function App() {
 
   const [dice, setDice] = React.useState(allNewDice())
   const [tenzies, setTenzies] = React.useState(false)
+  const [rollCount, setRollCount] = React.useState(0)
+  const [timeTaken, setTimeTaken] = React.useState(0)
+  const [name, setName] = React.useState("")
 
   React.useEffect(() => {
     const allHeld = dice.every(die => die.isHeld)
@@ -16,6 +20,19 @@ export default function App() {
       setTenzies(true)
     }
   }, [dice])
+
+  React.useEffect(() => {
+    let interval;
+    if (!tenzies) {
+      interval = setInterval(() => {
+        setTimeTaken((prevTime) => prevTime + 10);
+      }, 10);
+    } else if (tenzies) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [tenzies]);
+
 
   function generateNewDie() {
     return {
@@ -35,12 +52,15 @@ export default function App() {
 
   function rollDice() {
     if (!tenzies) {
+      setRollCount(prev => prev + 1)
       setDice(oldDice => oldDice.map(die => {
         return die.isHeld ?
           die :
           generateNewDie()
       }))
     } else {
+      setRollCount(0)
+      setTimeTaken(0)
       setTenzies(false)
       setDice(allNewDice())
     }
@@ -63,9 +83,17 @@ export default function App() {
     />
   ))
 
+  function handleName(event) {
+    setName(event.target.value)
+  }
+
+  function submitScore() {
+    // TODO
+  }
+
   return (
     <>
-      <main>
+      <section>
         {tenzies && <Confetti />}
         <h1 className="title">Tenzies</h1>
         <p className="instructions">Roll until all dice are the same.
@@ -79,7 +107,16 @@ export default function App() {
         >
           {tenzies ? "New Game" : "Roll"}
         </button>
-      </main>
+        <Stats
+          tenzies={tenzies}
+          rollCount={rollCount}
+          timeTaken={timeTaken}
+          submitScore={submitScore}
+          name={name}
+          handleName={handleName}
+        />
+      </section>
+      {/* <Leaderboard /> */}
     </>
   )
 }
