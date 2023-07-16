@@ -120,6 +120,7 @@ section {
 
 .leaderboard--entries {
   overflow-y: scroll;
+  scrollbar-width: none;
 }
 
 .leaderboard--entry, .leaderboard--table {
